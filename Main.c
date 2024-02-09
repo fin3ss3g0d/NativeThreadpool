@@ -62,14 +62,12 @@ void TestThreadpoolCallbackNative() {
 	/* 
 	* Initialize the callback environment, inline function
 	* https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-initializethreadpoolenvironment
-	* No entry in IAT
 	*/
 	MyTpInitializeCallbackEnviron(&pcbe);
 
 	/*
 	* Set the pool to the callback environment, inline function
 	* https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadpoolcallbackpool
-	* No entry in IAT
 	*/
 	MyTpSetCallbackThreadpool(&pcbe, pool);
 
