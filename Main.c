@@ -118,6 +118,8 @@ void TestThreadpoolCallbackNative() {
 	/*
 	* Sleep for 10 seconds, test the timer expiration
 	* After five seconds, the timer callback will be executed
+	* You would normally wait on something like an event and set it
+	* in the work item callback to signal that the work is done
 	*/
 	Sleep(10000); // Wait for 10 seconds
 
