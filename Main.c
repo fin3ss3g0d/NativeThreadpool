@@ -25,6 +25,10 @@ void CALLBACK WorkItemCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PT
 	}
 }
 
+VOID CALLBACK WaitCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WAIT Wait, TP_WAIT_RESULT WaitResult) {
+	printf("Wait callback is executing.\n");
+}
+
 void TestThreadpoolCallbackNative() {
 	// Load the thread pool functions
 	HMODULE hNtDll = GetModuleHandleW(L"ntdll.dll");
@@ -39,12 +43,17 @@ void TestThreadpoolCallbackNative() {
 	pTpAllocTimer TpAllocTimer = (pTpAllocTimer)GetProcAddress(hNtDll, "TpAllocTimer");
 	pTpSetTimer TpSetTimer = (pTpSetTimer)GetProcAddress(hNtDll, "TpSetTimer");
 	pTpReleaseTimer TpReleaseTimer = (pTpReleaseTimer)GetProcAddress(hNtDll, "TpReleaseTimer");
+	pTpAllocWait TpAllocWait = (pTpAllocWait)GetProcAddress(hNtDll, "TpAllocWait");
+	pTpSetWait TpSetWait = (pTpSetWait)GetProcAddress(hNtDll, "TpSetWait");
+	pTpReleaseWait TpReleaseWait = (pTpReleaseWait)GetProcAddress(hNtDll, "TpReleaseWait");
 
 	NTSTATUS status = 0;
 	PTP_POOL pool = NULL;
 	PTP_WORK work = NULL;
 	PTP_TIMER timer = NULL;
+	PTP_WAIT wait = NULL;
 	TP_CALLBACK_ENVIRON pcbe;
+	HANDLE waitEvent = NULL;
 
 	// Set the maximum number of threads for the pool
 	LONG maxThreads = 2;
@@ -123,6 +132,30 @@ void TestThreadpoolCallbackNative() {
 	*/
 	Sleep(10000); // Wait for 10 seconds
 
+	// Create an event to wait on
+	waitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (NULL == waitEvent) {
+		printf("CreateEvent failed with LastError: %u\n", GetLastError());
+		return;
+	}
+
+	// Allocate a wait object
+	status = TpAllocWait(&wait, (PTP_WAIT_CALLBACK)WaitCallback, NULL, &pcbe);
+	if (!NT_SUCCESS(status)) {
+		printf("TpAllocWait failed with status 0x%X\n", status);
+		return;
+	}
+
+	// Set the wait object to wait on the event
+	// This example sets the wait object to wait indefinitely until the event is signaled
+	TpSetWait(wait, waitEvent, NULL);
+
+	// Simulate signaling the event after a delay (for demonstration)
+	SetEvent(waitEvent);
+
+	// Wait for an additional time to ensure callbacks can complete
+	Sleep(5000); // Wait for another 5 seconds
+
 	/*
 	* Unused, it's best practice to use cooperative cancellation using timers.
 	* This will wait for all work items to finish, if something doesn't finish
@@ -135,6 +168,14 @@ void TestThreadpoolCallbackNative() {
 		return;
 	}
 	*/
+
+	// Release the wait object when it is done
+	status = TpReleaseWait(wait);
+	if (!NT_SUCCESS(status)) {
+		printf("TpReleaseWait failed with status 0x%X\n", status);
+	}
+
+	CloseHandle(waitEvent);
 
 	// Release the timer when it is done
 	status = TpReleaseTimer(timer);

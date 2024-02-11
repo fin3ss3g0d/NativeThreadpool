@@ -54,6 +54,20 @@ typedef NTSTATUS(NTAPI* pTpSetTimer)(
 typedef NTSTATUS(NTAPI* pTpReleaseTimer)(
 	_Inout_ PTP_TIMER Timer);
 
+typedef NTSTATUS(NTAPI* pTpAllocWait)(
+	_Out_ PTP_WAIT* Wait,
+	_In_ PTP_WAIT_CALLBACK Callback,
+	_Inout_opt_ PVOID Context,
+	_In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron);
+
+typedef NTSTATUS(NTAPI* pTpSetWait)(
+_Inout_ PTP_WAIT Wait,
+	_In_opt_ HANDLE Handle,
+	_In_opt_ PLARGE_INTEGER Timeout);
+
+typedef NTSTATUS(NTAPI* pTpReleaseWait)(
+	_Inout_ PTP_WAIT Wait);
+
 FORCEINLINE
 VOID
 MyTpInitializeCallbackEnviron(
